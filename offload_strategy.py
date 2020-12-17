@@ -858,7 +858,7 @@ def test_rmcf_lp_loss_plus():
     # all_alpha = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
     all_alpha = [round(i * 0.01 + 0.2, 2) for i in range(80)]
     experment_time=1
-    gamma=1
+    gamma=0.5
     # parameter = {
     #     "fail_num": fail_num,
     #     "alpha": all_alpha,
@@ -1094,6 +1094,8 @@ def create_path_3():
     fail_list[4]=0.3
     fail_list[1]=0.2
     fail_list[6]=0.2
+    fail_list[2]=0.1
+    fail_list[8]=0.1
 
     # fail_list = [0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1]  # l2和l6增加失效概率
     #设置丢包率
@@ -1106,8 +1108,13 @@ def create_path_3():
     # 设置路由
     graph1.set_route(K, path_1)
     # 设置链路cost
-
-    cost_list = [1]*12 #
+    cost_list = [1]*12
+    cost_list[0] = 1
+    cost_list[4] = 1
+    cost_list[1]=1.1
+    cost_list[6]=1.1
+    cost_list[2]=1.2
+    cost_list[8]=1.2
     graph1.set_graph_c_isomerism(cost_list)
 
     # 生成所有场景
@@ -1125,14 +1132,35 @@ def test_allot_strategy():
     # graph1.set_demand([-10, 0, 10, 0, 10, 0, 0, -10, -10, 0, 10])
     # 判断是否需要增加结点
     graph1.change_topo()
-    all_old_allot=[[30,0,0],
-                   [20,10,0],
-                   [20,5,5],
-                   [10,10,10],
-                   [0, 20, 10],
-                   [0,15,15],
-                   [0,30,0],
-                   [0,0,30]]
+    #cost相同的分配
+    # all_old_allot=[[30,0,0],
+    #                [20,10,0],
+    #                [20,5,5],
+    #                [10,10,10],
+    #                [0, 20, 10],
+    #                [0,15,15],
+    #                [0,30,0],
+    #                [0,0,30]]
+
+    #cost[1,1.5,1.5]，概率[0.2,0.1,0.1]
+    # all_old_allot = [[30, 0, 0],
+    #                 [20,5,5],
+    #                  [18,12,0],
+    #                 [12.8,8.6,8.6],
+    #                 [10,10,10],
+    #                 [0, 20, 10],
+    #                 [0,15,15],
+    #                 [0,30,0]]
+
+    # cost[1,1.5,1.5]，概率[0.2,0.1,0.1]
+    all_old_allot = [[30, 0, 0],
+                     [16.363636, 0.0, 13.636364],
+                     [10.939227, 9.9447514, 9.1160221],
+                     [10, 10, 10],
+                     [0, 10, 20],
+                     [0, 15, 15],
+                     [0, 30, 0],
+                     [0,0,30]]
     all_result=[]
     all_alpha = [round(i * 0.01 + 0.2, 2) for i in range(80)]
     # all_alpha=[0.2]
@@ -1160,7 +1188,7 @@ def test_allot_strategy():
                                                                                                    gamma,
                                                                                                    a_alpha,
                                                                                                    capacity_flag=False)
-            a_result.append([zeta,pulp_cvar])
+            a_result.append([pulp_cvar,pulp_cost,obj_rmcf])
         all_result.append(a_result)
     print("可用性",a_alpha)
     print("分配方案:",all_old_allot)
@@ -1171,12 +1199,12 @@ def test_allot_strategy():
         print()
 
     #写入表格
-    output = open('path_321cost_111.xls', 'w', encoding='gbk')
-    output.write('分配方案\t'+str([30, 0, 0])+'\t\t'+str([20, 10, 0])+'\t\t'+
-                 str([20, 5, 5])+'\t\t'+str([10, 10, 10])+'\t\t'+
-                 str([0, 20, 10])+'\t\t'+str([0, 15, 15])+'\t\t'+
-                 str([0, 30, 0])+'\t\t'+str([0, 0, 30])+'\n')
-    output.write('可用性\t'+'var\tcvar\t'*7+'var\tcvar\n')
+    output = open('path_321cost_1_11_12.xls', 'w', encoding='gbk')
+    output.write('分配方案\t')
+    for i in range(len(all_old_allot)):
+        output.write(str(all_old_allot[i])+'\t\t\t')
+    output.write('\n')
+    output.write('可用性\t'+'cvar\tcost\tobj\t'*7+'cvar\tcost\tobj\n')
     for i in range(len(all_result)):
         output.write(str(all_alpha[i]))
         output.write('\t')
@@ -1184,6 +1212,8 @@ def test_allot_strategy():
             output.write(str(all_result[i][j][0]))  # write函数不能写int类型的参数，所以使用str()转化
             output.write('\t')  # 相当于Tab一下，换一个单元格
             output.write(str(all_result[i][j][1]))  # write函数不能写int类型的参数，所以使用str()转化
+            output.write('\t')  # 相当于Tab一下，换一个单元格
+            output.write(str(all_result[i][j][2]))  # write函数不能写int类型的参数，所以使用str()转化
             output.write('\t')  # 相当于Tab一下，换一个单元格
         output.write('\n')  # 写完一行立马换行
     output.close()
